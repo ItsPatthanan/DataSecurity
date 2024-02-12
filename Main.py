@@ -1,10 +1,8 @@
 import PySimpleGUI as sg
 layout = [
-    [sg.Text('AES Encryption - K0BiMaChi')],
+    [sg.Text('AES Encryption - K0BiMaChi',size=(32,1),font=('prompt 32 bold'))],
     [sg.Input(), sg.FileBrowse()],
-    [sg.OK(), sg.Cancel()]
+    [sg.OK(), sg.Cancel()],
 ]
 window = sg.Window('Example1', layout)
-event, values = window.read()
-sg.Popup('User input', values[0]) #show user input
 window.close()
