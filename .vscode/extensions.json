@@ -1,0 +1,15 @@
+{
+    "recommendations": [
+        "eamodio.gitlens",
+        "kevinrose.vsc-python-indent",
+        "donjayamanne.python-environment-manager",
+        "ms-python.debugpy",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "esbenp.prettier-vscode",
+        "sdras.night-owl",
+        "pkief.material-icon-theme",
+        "mhutchie.git-graph",
+        "streetsidesoftware.code-spell-checker"
+    ]
+}
