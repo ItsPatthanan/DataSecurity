@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
-from Crypto.Util.Padding import pad, unpad
+from Crypto.Util.Padding import pad
 import base64
 
 # Function to create a centered text element
@@ -18,6 +18,11 @@ def aes_encrypt(plaintext, key):
     ciphertext = cipher.encrypt(pad(plaintext, AES.block_size))
     return base64.b64encode(cipher.iv + ciphertext)
 
+# Function to save data to a new file
+def save_to_file(data, file_path):
+    with open(file_path, 'wb') as file:
+        file.write(data)
+
 # Create two separate column layouts for each section
 layout1 = [
     [sg.Column(
@@ -26,6 +31,8 @@ layout1 = [
             [sg.Input(), sg.FileBrowse()],
             [sg.Button("Encryption")],
             [sg.Text("KEY"), sg.Canvas(background_color='lightblue', size=(300, 20), key='key_canvas')],
+            [sg.Text("Encryption Output")],
+            [sg.Multiline(size=(50, 5), background_color='lightblue', key='encryption_output')],
         ],
         element_justification="center",
     )]
@@ -65,7 +72,7 @@ while True:
             key = generate_key()
 
             # Update the canvas to display the key
-            window['key_canvas'].TKCanvas.create_text(150, 10, text=f"{key.hex()}", fill='black', font=('Helvetica', 10, 'bold'))
+            window['key_canvas'].TKCanvas.create_text(150, 10, text=f"{key.hex()}", fill='black', font=('prompt', 10, 'bold'))
 
             # Read the file content
             with open(file_path, 'rb') as file:
@@ -73,9 +80,17 @@ while True:
 
             # Encrypt the file content
             encrypted_data = aes_encrypt(plaintext, key)
+
+            # Update the Multiline element to display the encrypted data
+            window['encryption_output'].update(f"{encrypted_data.decode('utf-8')}")
+
+            # Save the encrypted data to a new file
+            new_file_path = file_path + '.encrypted'
+            save_to_file(encrypted_data, new_file_path)
             
-            # Display the key and the encrypted data (in a real-world scenario, handle the key securely)
-            print(f"Key: {key}")
+            # Debug
+            print(f"Key: {key.hex()}")
             print(f"Encrypted Data: {encrypted_data}")
+            print(f"Encrypted Data saved to: {new_file_path}")
 
 window.close()
