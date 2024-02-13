@@ -31,7 +31,7 @@ layout1 = [
             [sg.Input(), sg.FileBrowse()],
             [sg.Button("Encryption")],
             [sg.Text("KEY"), sg.Canvas(background_color='lightblue', size=(300, 20), key='key_canvas')],
-            [sg.Text("Encryption Output")],
+            [sg.Text("Encryption output")],
             [sg.Multiline(size=(50, 5), background_color='lightblue', key='encryption_output')],
         ],
         element_justification="center",
@@ -43,14 +43,17 @@ layout2 = [
         [
             [centered_text('AES Decryption - K0BiMaChi')],
             [sg.Input(), sg.FileBrowse()],
-            [sg.Button("Decryption")]
+            [sg.Text("KEY"),sg.Input(key='Decryption_key')],
+            [sg.Button("Decryption")],
+            [sg.Text("Decryption output")],
+            [sg.Multiline(size=(50, 5), background_color='lightblue', key='decryption_output')],
         ],
         element_justification="center",
     )]
 ]
 
 # Add an empty row with a border between layout1 and layout2
-separator = [[sg.Canvas(background_color='lightblue', size=(900, 1))]]
+separator = [[sg.Canvas(background_color='lightblue', size=(900, 2))]]
 
 # Combine layout1, separator, and layout2
 final_layout = layout1 + separator + layout2
@@ -88,9 +91,12 @@ while True:
             new_file_path = file_path + '.encrypted'
             save_to_file(encrypted_data, new_file_path)
             
+            
+            
             # Debug
             print(f"Key: {key.hex()}")
             print(f"Encrypted Data: {encrypted_data}")
             print(f"Encrypted Data saved to: {new_file_path}")
+            
 
 window.close()
