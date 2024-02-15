@@ -2,58 +2,39 @@ import PySimpleGUI as sg
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
-import base64
-import tkinter as tk
 
 # Function to create a centered text element
 def centered_text(text, size=(32, 1), font=('prompt 32 bold')):
     return sg.Text(text, size=size, font=font, justification='center')
 
-# Function to generate a random key
-def generate_key():
-    return get_random_bytes(16)
+def generate_aes_key():
+    return get_random_bytes(32)  # 256 bits
 
-# Function to encrypt data with AES
-def aes_encrypt(plaintext, key):
+def encrypt_file(input_file, key):
     cipher = AES.new(key, AES.MODE_CBC)
-    padded_plaintext = pad(plaintext, AES.block_size, style='pkcs7')
-    ciphertext = cipher.encrypt(padded_plaintext)
-    return base64.b64encode(cipher.iv + ciphertext)
+    with open(input_file, 'rb') as file:
+        plaintext = file.read()
+    ciphertext = cipher.encrypt(pad(plaintext, AES.block_size))
+    return ciphertext, cipher.iv
 
-# Function to decrypt data with AES
-def aes_decrypt(ciphertext, key):
-    try:
-        data = base64.b64decode(ciphertext)
-        cipher = AES.new(key, AES.MODE_CBC, iv=data[:16])
-        decrypted_data = unpad(cipher.decrypt(data[16:]), AES.block_size, style='pkcs7')
-        return decrypted_data.decode('utf-8')
-    except (ValueError, KeyError, TypeError) as e:
-        print(f"Decryption failed: {e}")
-        return None
-# Function to check if data size is a multiple of block size
-def is_multiple_of_block_size(data):
-    block_size = AES.block_size
-    return len(data) % block_size == 0 if data is not None else False
-
-# Function to save data to a new file
-def save_to_file(data, file_path):
-    with open(file_path, 'wb') as file:
-        file.write(data)
-
-# Create a random key at the beginning
-encryption_key = generate_key()
+def decrypt_file(input_file, key, iv):
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    with open(input_file, 'rb') as file:
+        ciphertext = file.read()
+    decrypted_data = unpad(cipher.decrypt(ciphertext), AES.block_size)
+    return decrypted_data
 
 # Create two separate column layouts for each section
 layout1 = [
     [sg.Column(
         [
             [centered_text('AES Encryption - K0BiMaChi')],
-            [sg.Input(), sg.FileBrowse()],
+            [sg.Input(), sg.FileBrowse(key='encryption_input')],
             [sg.Button("Encryption")],
-            [sg.Text("KEY"), sg.Canvas(background_color='lightblue', size=(300, 20), key='Encryption_key')],
-            [sg.Button("Copy Key")],
+            [sg.Text("KEY"), sg.Canvas(background_color='lightblue', size=(400, 20), key='Encryption_key'), sg.Button("Copy Key")],
             [sg.Text("Encryption Output")],
             [sg.Multiline(size=(50, 5), background_color='lightblue', key='encryption_output')],
+
         ],
         element_justification="center",
     )]
@@ -63,8 +44,8 @@ layout2 = [
     [sg.Column(
         [
             [centered_text('AES Decryption - K0BiMaChi')],
-            [sg.Input(), sg.FileBrowse()],
-            [sg.Text("KEY"), sg.Input(key='Decryption_key')],
+            [sg.Input(), sg.FileBrowse(key='decryption_input')],
+            [sg.Text("KEY"), sg.Input(key='Decryption_key'), sg.Button("Paste key")],
             [sg.Button("Decryption")],
             [sg.Text("Decryption Output")],
             [sg.Multiline(size=(50, 5), background_color='lightblue', key='decryption_output')],
@@ -82,6 +63,8 @@ final_layout = layout1 + separator + layout2
 # Create the window
 window = sg.Window('AES Encryption/Decryption - K0BiMaChi', final_layout)
 
+key_to_copy = b''  # Variable to store the generated key
+
 while True:
     event, values = window.read()
 
@@ -89,41 +72,26 @@ while True:
     if event == sg.WIN_CLOSED or event == 'Cancel':
         break
     elif event == 'Encryption':
-        file_path = values[0]
-
-        if file_path:
-            # Update the canvas to display the key
-            key_text = f"{encryption_key.hex()}"
-            window['Encryption_key'].TKCanvas.create_text(150, 10, text=key_text, fill='black', font=('prompt', 10, 'bold'))
-
-            # Read the file content
-            with open(file_path, 'rb') as file:
-                plaintext = file.read()
-
-            # Encrypt the file content
-            encrypted_data = aes_encrypt(plaintext, encryption_key)
-            print(f"Is encrypted data a multiple of block size? {is_multiple_of_block_size(encrypted_data)}")
-            # Update the Multiline element to display the encrypted data
-            window['encryption_output'].update(f"{encrypted_data.decode('utf-8')}")
-
-            # Save the encrypted data to a new file
-            new_file_path = file_path + '.encrypted'
-            save_to_file(encrypted_data, new_file_path)
-
-            # Debug
-            print(f"Key: {encryption_key.hex()}")
-            print(f"Encrypted Data: {encrypted_data}")
-            print(f"Is encrypted data a multiple of block size? {is_multiple_of_block_size(encrypted_data)}")
-            print(f"Encrypted Data saved to: {new_file_path}")
-
-
+        key = generate_aes_key()
+        window['Encryption_key'].TKCanvas.create_text(150, 10, text=key.hex(), font=('Helvetica', 10))
+        input_file = values['encryption_input']
+        ciphertext, iv = encrypt_file(input_file, key)
+        window['encryption_output'].update(value='File encrypted successfully.')
+        encrypted_file = input_file + '.enc'
+        with open(encrypted_file, 'wb') as file:
+            file.write(iv + ciphertext)
+        window['encryption_output'].update(value=f'Encrypted file saved as: {encrypted_file}')
     elif event == 'Copy Key':
-        key_text = window['Encryption_key'].TKCanvas.itemcget(window['Encryption_key'].TKCanvas.find_all()[0], 'text')
-        root = sg.tk.Tk()  # Use sg.tk.Tk() to access the Tkinter root
-        root.clipboard_clear()
-        root.clipboard_append(key_text)
-        root.update()
-        root.destroy()
-
-
+        key_to_copy = key
+    # ...
+    elif event == 'Decryption':
+        input_file = values['decryption_input']
+        key = bytes.fromhex(values['Decryption_key'])
+        with open(input_file, 'rb') as file:
+            iv = file.read(16)  # Read the IV from the file
+            decrypted_data = decrypt_file(input_file, key, iv)
+        window['decryption_output'].update(value=decrypted_data)
+    # ...
+    elif event == 'Paste key':
+        window['Decryption_key'].update(value=key_to_copy.hex())
 window.close()
