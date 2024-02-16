@@ -3,13 +3,12 @@ from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 
-# Function to create a centered text element
 def centered_text(text, size=(32, 1), font=('prompt 32 bold')):
     return sg.Text(text, size=size, font=font, justification='center')
 
 def generate_aes_key():
     return get_random_bytes(32)  # 256 bits
-
+    
 def encrypt_file(input_file, key):
     cipher = AES.new(key, AES.MODE_CBC)
     with open(input_file, 'rb') as file:
@@ -24,7 +23,6 @@ def decrypt_file(input_file, key, iv):
     decrypted_data = unpad(cipher.decrypt(ciphertext), AES.block_size)
     return decrypted_data
 
-# Create two separate column layouts for each section
 layout1 = [
     [sg.Column(
         [
@@ -34,12 +32,10 @@ layout1 = [
             [sg.Text("KEY"), sg.Canvas(background_color='lightblue', size=(400, 20), key='Encryption_key'), sg.Button("Copy Key")],
             [sg.Text("Encryption Output")],
             [sg.Multiline(size=(50, 5), background_color='lightblue', key='encryption_output')],
-
         ],
         element_justification="center",
     )]
 ]
-
 layout2 = [
     [sg.Column(
         [
@@ -54,20 +50,14 @@ layout2 = [
     )]
 ]
 
-# Add an empty row with a border between layout1 and layout2
 separator = [[sg.Canvas(background_color='lightblue', size=(900, 2))]]
-
-# Combine layout1, separator, and layout2
 final_layout = layout1 + separator + layout2
-
-# Create the window
 window = sg.Window('AES Encryption/Decryption - K0BiMaChi', final_layout)
 
-key_to_copy = b''  # Variable to store the generated key
+key_to_copy = b''  
 
 while True:
     event, values = window.read()
-
     # Handle events
     if event == sg.WIN_CLOSED or event == 'Cancel':
         break
@@ -83,15 +73,14 @@ while True:
         window['encryption_output'].update(value=f'Encrypted file saved as: {encrypted_file}')
     elif event == 'Copy Key':
         key_to_copy = key
-    # ...
+    elif event == 'Paste key':
+        window['Decryption_key'].update(value=key_to_copy.hex())
     elif event == 'Decryption':
         input_file = values['decryption_input']
         key = bytes.fromhex(values['Decryption_key'])
         with open(input_file, 'rb') as file:
-            iv = file.read(16)  # Read the IV from the file
+            iv = file.read(16)
             decrypted_data = decrypt_file(input_file, key, iv)
         window['decryption_output'].update(value=decrypted_data)
-    # ...
-    elif event == 'Paste key':
-        window['Decryption_key'].update(value=key_to_copy.hex())
+    
 window.close()
