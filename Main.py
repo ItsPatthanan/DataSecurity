@@ -32,9 +32,10 @@ layout1 = [
             [centered_text('AES Encryption - K0BiMaChi')],
             [sg.Input(), sg.FileBrowse(key='encryption_input')],
             [sg.Button("Encryption"),sg.Button("Clear Encryption")],
-            [sg.Text("KEY"), sg.Canvas(background_color='lightblue', size=(400, 20), key='Encryption_key'), sg.Button("Copy Key")],
+            [sg.Text("KEY")],
+            [sg.Canvas(background_color='lightblue', size=(400, 20), key='Encryption_key'), sg.Button("Copy Key")],
             [sg.Text("Encryption Output")],
-            [sg.Multiline(size=(50, 5), background_color='lightblue', key='encryption_output')],
+            [sg.Multiline(size=(50, 2), background_color='lightblue', key='encryption_output')],
 
         ],
         element_justification="center",
@@ -46,10 +47,11 @@ layout2 = [
         [
             [centered_text('AES Decryption - K0BiMaChi')],
             [sg.Input(), sg.FileBrowse(key='decryption_input')],
-            [sg.Text("KEY"), sg.Input(key='Decryption_key'), sg.Button("Paste key")],
+            [sg.Text("KEY")],
+            [sg.Input(key='Decryption_key'), sg.Button("Paste key")],
             [sg.Button("Decryption"),sg.Button("Clear Decryption")],
             [sg.Text("Decryption Output")],
-            [sg.Multiline(size=(50, 5), background_color='lightblue', key='decryption_output')],
+            [sg.Multiline(size=(50, 2), background_color='lightblue', key='decryption_output')],
         ],
         element_justification="center",
     )]
@@ -90,15 +92,20 @@ while True:
 
     elif event == 'Copy Key':
         key_to_copy = key
-
     elif event == 'Decryption':
         input_file = values['decryption_input']
         key = bytes.fromhex(values['Decryption_key'])
         with open(input_file, 'rb') as file:
             iv = file.read(16)  # Read the IV from the file
             decrypted_data = decrypt_file(input_file, key, iv)
-        window['decryption_output'].update(value=decrypted_data)
-
+        decrypted_data_str = decrypted_data.decode('utf-8', errors='replace')
+        window['decryption_output'].update(value=decrypted_data_str)
+        # Generate a new filename for the decrypted file
+        decrypted_filename = input_file.rsplit('.', 1)[0]  # Remove the last extension
+        decrypted_filename = f'{decrypted_filename}.txt'
+        with open(decrypted_filename, 'w', encoding='utf-8') as file:
+            file.write(decrypted_data_str)
+        window['decryption_output'].update(value=f'Decrypted file saved as: {decrypted_filename}')
     elif event == 'Clear Decryption':
         window['decryption_input'].update()
         window['Decryption_key'].update(value='')
